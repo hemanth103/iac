@@ -15,7 +15,7 @@ provider "aws" {
 
 # Create a VPC
 resource "aws_vpc" "hemanth-demo" {
-  cidr_block       = "10.400.0.0/16"
+  cidr_block       = "10.200.0.0/16"
 
   tags = {
     Name = "terraform-demo"
