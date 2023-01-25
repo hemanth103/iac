@@ -14,7 +14,7 @@ provider "aws" {
 }
 
 # Create a VPC
-resource "aws_vpc" "hemanth-demo" {
+resource "aws_vpc" "papa-demo" {
   cidr_block       = "10.200.0.0/16"
 
   tags = {
