@@ -44,7 +44,7 @@ resource "azurerm_subnet" "subnet" {
 }
 
 # Create a Network Security Group
-resource "azurerm_network_security_group" "nssg" {
+resource "azurerm_network_security_group" "nsg" {
   name                = var.nsg_name
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
