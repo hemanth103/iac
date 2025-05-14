@@ -24,6 +24,10 @@ resource "azurerm_virtual_network" "vnet" {
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   address_space       = var.vnet_address_space
+  
+  depends_on = [
+    azurerm_resource_group.rg
+  ]
 }
 
 # Create a Subnet
@@ -32,6 +36,11 @@ resource "azurerm_subnet" "subnet" {
   resource_group_name  = azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet.name
   address_prefixes     = var.subnet_address_prefixes
+  
+  # Ensure subnet is fully provisioned before associating NSG
+  depends_on = [
+    azurerm_virtual_network.vnet
+  ]
 }
 
 # Create a Network Security Group
@@ -39,6 +48,10 @@ resource "azurerm_network_security_group" "nsg" {
   name                = var.nsg_name
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
+  
+  depends_on = [
+    azurerm_resource_group.rg
+  ]
 }
 
 # Create a Network Security Group Rule (Optional - Add rules as needed)
@@ -54,10 +67,21 @@ resource "azurerm_network_security_rule" "nsg_rule_allow_ssh" {
   destination_address_prefix  = "*"
   network_security_group_name = azurerm_network_security_group.nsg.name
   resource_group_name         = azurerm_resource_group.rg.name
+  
+  depends_on = [
+    azurerm_network_security_group.nsg
+  ]
 }
 
 # Associate the NSG with the Subnet
 resource "azurerm_subnet_network_security_group_association" "snet_nsg_assoc" {
   subnet_id                 = azurerm_subnet.subnet.id
   network_security_group_id = azurerm_network_security_group.nsg.id
+  
+  # Ensure both subnet and NSG are fully provisioned before attempting association
+  depends_on = [
+    azurerm_subnet.subnet,
+    azurerm_network_security_group.nsg,
+    azurerm_network_security_rule.nsg_rule_allow_ssh
+  ]
 }
