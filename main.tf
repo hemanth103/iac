@@ -1,25 +1,63 @@
+# Configure the Azure Provider
 terraform {
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 3.0"
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.0" # or a later version
     }
   }
 }
 
-# Configure the AWS Provider
-
-provider "aws" {
-  region = "us-east-2"
+provider "azurerm" {
+  features {}
 }
 
-# Create a VPC
-resource "aws_vpc" "papa-demo" {
-  cidr_block       = "10.200.0.0/16"
+# Create a Resource Group
+resource "azurerm_resource_group" "rg" {
+  name     = var.resource_group_name
+  location = var.resource_group_location
+}
 
-  tags = {
-    Name = "terraform-demo"
-    Org = "Development-box"
-    Apps = "test_cec"
-  }
+# Create a Virtual Network
+resource "azurerm_virtual_network" "vnet" {
+  name                = var.vnet_name
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  address_space       = var.vnet_address_space
+}
+
+# Create a Subnet
+resource "azurerm_subnet" "subnet" {
+  name                 = var.subnet_name
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefixes     = var.subnet_address_prefixes
+}
+
+# Create a Network Security Group
+resource "azurerm_network_security_group" "nsg" {
+  name                = var.nsg_name
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+}
+
+# Create a Network Security Group Rule (Optional - Add rules as needed)
+resource "azurerm_network_security_rule" "nsg_rule_allow_ssh" {
+  name                        = "AllowSSH"
+  priority                    = 100
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "22"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  network_security_group_name = azurerm_network_security_group.nsg.name
+  resource_group_name         = azurerm_resource_group.rg.name
+}
+
+# Associate the NSG with the Subnet
+resource "azurerm_subnet_network_security_group_association" "snet_nsg_assoc" {
+  subnet_id                 = azurerm_subnet.subnet.id
+  network_security_group_id = azurerm_network_security_group.nsg.id
 }
